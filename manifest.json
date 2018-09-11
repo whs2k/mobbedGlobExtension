@@ -1,0 +1,21 @@
+{
+    "name": "Usage Stats",
+    "version": "1.0",
+    "description": "Keeps tab on your web usage.",
+    "browser_action": {
+        "default_icon": "icon.png"
+    },
+    "permissions": [
+        "tabs", 
+        "<all_urls>", 
+        "downloads", 
+        "storage"
+    ],
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "manifest_version": 2,
+    "icons": {
+        "512": "icon.png"
+    }
+}
