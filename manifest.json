@@ -3,7 +3,8 @@
     "version": "1.0",
     "description": "Keeps tab on your web usage.",
     "browser_action": {
-        "default_icon": "icon.png"
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
     },
     "permissions": [
         "tabs", 
@@ -12,7 +13,8 @@
         "storage"
     ],
     "background": {
-        "scripts": ["background.js"]
+        "scripts": ["background.js"],
+        "persistent": true
     },
     "manifest_version": 2,
     "icons": {

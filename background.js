@@ -26,29 +26,31 @@ function initDataStores() {
     return Promise.all([initUsageData]);
 }
 
+function addUsage(action, tabId, params) {
+    chrome.storage.local.get(['usage_data'], function(response) { 
+        response.usage_data.push({
+            action: action,
+            tabId: tabId,
+            params: params
+        });
+        chrome.storage.local.set({usage_data: response.usage_data});
+    });
+}
+
 // add listeners
 function addListeners() {
     chrome.tabs.onCreated.addListener(function(tab) {
-        console.log('created ', tab.id);
-        console.log(tab.url);
+        // find tuple with same id which is active
+        addUsage("created", tab.id);
     });
 
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         if (changeInfo.status !== 'complete') return;
-        console.log('updated ', tab.id);
-        console.log(tab.url);
+        addUsage("updated", tab.id, {url: tab.url});
     });
 
     chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-        console.log('removed ', tabId);
-        console.log(removeInfo);
-        return;
-        var blob = new Blob([JSON.stringify(removeInfo, null, 4)], {type: "text/json"});
-        var url = URL.createObjectURL(blob);
-        chrome.downloads.download({
-          url: url,
-          filename: "usage-stats.json"
-        });
+        addUsage("removed", tabId);
     })
 
     return Promise.resolve();
