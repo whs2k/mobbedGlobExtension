@@ -23,10 +23,15 @@ function initDb() {
     return dbPromise;
 }
 
-function renderUsageData() {
-    var transaction = db.transaction(['usageStore'], 'readonly');
+function getStore(mode) {
+    mode = (mode == 'rw') ? 'readwrite' : 'readonly';
+    var transaction = db.transaction(['usageStore'], mode);
     var usageStore = transaction.objectStore('usageStore');
-    usageStore.getAll().then(function(usage_data) {
+    return usageStore;
+}
+
+function renderUsageData() {
+    getStore().getAll().then(function(usage_data) {
         activitiesList.innerHTML = '';
         usage_data.forEach(function(usage) {
             var text = usage.action + " " + usage.tabId;
@@ -37,7 +42,7 @@ function renderUsageData() {
             if (Object.keys(usage).length) {
                 text += " (" + JSON.stringify(usage) + ")"
             }
-            
+
             var node = document.createElement("li");
             var textnode = document.createTextNode(text);
             node.appendChild(textnode);
@@ -57,9 +62,10 @@ function defineActions() {
     clearBtn.onclick = function() {
         var r = confirm("Are you sure you want to delete all logs?");
         if (r == true) {
-            chrome.storage.local.set({ usage_data: [] });
+            getStore('rw').clear().then(function() {
+                renderUsageData();
+            });
         }
-        renderUsageData();
     };
 
     downloadBtn.onclick = function() {
