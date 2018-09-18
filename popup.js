@@ -69,8 +69,8 @@ function defineActions() {
     };
 
     downloadBtn.onclick = function() {
-        chrome.storage.local.get(['usage_data'], function(response) {
-            var blob = new Blob([JSON.stringify(response.usage_data, null, 4)], { type: "text/json" });
+        getStore().getAll().then(function(usage_data) {
+            var blob = new Blob([JSON.stringify(usage_data, null, 4)], { type: "text/json" });
             var url = URL.createObjectURL(blob);
             chrome.downloads.download({
                 url: url,
