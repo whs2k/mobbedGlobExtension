@@ -6,8 +6,16 @@
 </head>
 <body>
     <h4 class="title">Activities:</h1>
-    <ul id="activitiesList">
-    </ul>
+    <div id="tableContainer">
+        <table id="usageTable">
+        <thead>
+            <th>Domain</th>
+            <th>Duration</th>
+            <th>Last Url</th>
+        </thead>
+        <tbody id="usageBody"></tbody>
+        </table>
+    </div>
     <div class="actions">
         <button class="action" id="clearBtn">Clear All</button>
         <button class="action" id="downloadBtn">Download</button>

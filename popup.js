@@ -1,5 +1,5 @@
 var db;
-activitiesList = document.querySelector('#activitiesList')
+usageBody = document.querySelector('#usageBody')
 clearBtn = document.querySelector('#clearBtn');
 downloadBtn = document.querySelector('#downloadBtn');
 
@@ -30,30 +30,74 @@ function getStore(mode) {
     return usageStore;
 }
 
+function millisecondsToStr (milliseconds) {
+    if (!millisecondsToStr) {
+        return "";
+    }
+    // TIP: to find current time in milliseconds, use:
+    // var  current_time_milliseconds = new Date().getTime();
+
+    function numberEnding (number) {
+        return (number > 1) ? 's' : '';
+    }
+
+    var temp = Math.floor(milliseconds / 1000);
+    var years = Math.floor(temp / 31536000);
+    if (years) {
+        return years + ' year' + numberEnding(years);
+    }
+    //TODO: Months! Maybe weeks? 
+    var days = Math.floor((temp %= 31536000) / 86400);
+    if (days) {
+        return days + ' day' + numberEnding(days);
+    }
+    var hours = Math.floor((temp %= 86400) / 3600);
+    if (hours) {
+        return hours + ' hour' + numberEnding(hours);
+    }
+    var minutes = Math.floor((temp %= 3600) / 60);
+    if (minutes) {
+        return minutes + ' minute' + numberEnding(minutes);
+    }
+    var seconds = temp % 60;
+    if (seconds) {
+        return seconds + ' second' + numberEnding(seconds);
+    }
+    return 'less than a second'; //'just now' //or other string you like;
+}
+
 function renderUsageData() {
     getStore().getAll().then(function(usage_data) {
-        activitiesList.innerHTML = '';
+        usageBody.innerHTML = '';
         usage_data.forEach(function(usage) {
-            var text = usage.action + " " + usage.tabId;
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            var textnode = document.createTextNode(usage.domain);
+            td.appendChild(textnode);
+            tr.appendChild(td);
+            
+            td = document.createElement("td");
+            textnode = document.createTextNode(millisecondsToStr(usage.duration));
+            td.appendChild(textnode);
+            tr.appendChild(td);
+            
+            td = document.createElement("td");
+            textnode = document.createTextNode(usage.url);
+            td.appendChild(textnode);
+            tr.appendChild(td);
 
-            delete usage.action;
-            delete usage.tabId;
-
-            if (Object.keys(usage).length) {
-                text += " (" + JSON.stringify(usage) + ")"
-            }
-
-            var node = document.createElement("li");
-            var textnode = document.createTextNode(text);
-            node.appendChild(textnode);
-            activitiesList.appendChild(node);
+            usageBody.appendChild(tr);
         });
 
         if (usage_data.length == 0) {
-            var node = document.createElement("center");
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
             var textnode = document.createTextNode("Your logs will show up here.");
-            node.appendChild(textnode);
-            activitiesList.appendChild(node);
+            td.setAttribute("colspan", 3);
+            td.style.textAlign = "center";
+            td.appendChild(textnode);
+            tr.appendChild(td);
+            usageBody.appendChild(tr);
         }
     });
 }
