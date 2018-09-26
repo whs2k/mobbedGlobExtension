@@ -114,12 +114,13 @@ function addTabUsage(tab) {
     // console.log("Added ", tab.url, " with duration ", tab.duration);
 }
 
-function updateTabUsage(tab) {
+function updateTabUsage(tab, new_tab) {
     if (!tab.startTime) {
         tab.startTime = Date.now() - timer_interval;
     }
     tab.endTime = Date.now();
     tab.duration = tab.endTime - tab.startTime;
+    tab.url = new_tab.url || tab.url;
     var request = getStore('rw').put(tab).then(function(e) {
         // console.log('Woot! Did it');
     }).catch(function(e) {
@@ -149,7 +150,7 @@ function reviewTabs() {
                 // tab found. 
                 // now if same domain - update the time period, else create new entry
                 if (tab.domain == saved_tab.domain) {
-                    updateTabUsage(tab);
+                    updateTabUsage(saved_tab, tab);
                 } else {
                     addTabUsage(tab);
                 }
