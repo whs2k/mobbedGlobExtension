@@ -4,7 +4,7 @@
     border-bottom: 1px solid #aaa;
 }
 
-#usageTable>#usageBody>tr>td:nth-child(3) {
+#usageTable > #usageBody > tr > td:nth-child(3) {
     word-break: break-all;
 }
 
@@ -20,7 +20,6 @@ table {
     max-width: 700px;
     border-collapse: collapse;
 }
-
 
 /* Zebra striping */
 
@@ -39,4 +38,9 @@ td, th {
     border: 1px solid #ccc;
     text-align: left;
     font-size: 14px;
+}
+
+#dateInput {
+    border: 1px solid #ddd;
+    margin-left: 5px;
 }

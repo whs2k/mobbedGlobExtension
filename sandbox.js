@@ -69,6 +69,19 @@ usageIndex.openCursor(IDBKeyRange.bound(100, 500)).then(function cursorCallback(
   return cursor.continue().then(cursorCallback);
 }).then(function() { console.log("Done!"); });
 -------------------------------------------------
+var transaction = db.transaction(['usageStore'], 'readwrite');
+var usageStore = transaction.objectStore('usageStore');
+var usageIndex = usageStore.index('tabId');
+usageIndex.openCursor(IDBKeyRange.only(24)).then(function cursorCallback(cursor) {
+  if (!cursor) return;
+  console.log(cursor.value);
+  return cursor.continue().then(cursorCallback);
+}).then(function() { console.log("Done!"); });
+-------------------------------------------------
+var transaction = db.transaction(['usageStore'], 'readwrite');
+var usageStore = transaction.objectStore('usageStore');
+var usageIndex = usageStore.index('tabId');
+usageIndex.count(IDBKeyRange.only(24)).then(printAll)
 -------------------------------------------------
 -------------------------------------------------
 -------------------------------------------------

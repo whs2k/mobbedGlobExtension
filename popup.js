@@ -1,21 +1,31 @@
 var db;
-usageBody = document.querySelector('#usageBody')
+usageBody = document.querySelector('#usageBody');
+dateInput = document.querySelector('#dateInput');
+btnRenderUsage = document.querySelector('#btnRenderUsage');
 clearBtn = document.querySelector('#clearBtn');
 downloadBtn = document.querySelector('#downloadBtn');
 
 function init() {
-    initDb().then(function() {
+    initUi().then(initDb).then(function () {
         renderUsageData();
         defineActions();
     });
 }
 
+function initUi() {
+    dateInput.value = formatDate();
+
+    btnRenderUsage.onclick = renderUsageData;
+
+    return Promise.resolve();
+}
+
 function initDb() {
     var dbPromise = idb.open('mobbedGlob', 1);
 
-    dbPromise.then(function(resolved_db) {
+    dbPromise.then(function (resolved_db) {
         db = resolved_db;
-    }).catch(function(e) {
+    }).catch(function (e) {
         console.log('onerror!');
         console.dir(e);
     });
@@ -30,14 +40,31 @@ function getStore(mode) {
     return usageStore;
 }
 
-function millisecondsToStr (milliseconds) {
+function formatDate(date) {
+    var d, month, day, year;
+    if (!date) {
+        d = new Date()
+    } else {
+        d = new Date(date);
+    }
+    month = '' + (d.getMonth() + 1);
+    day = '' + d.getDate();
+    year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
+}
+
+function millisecondsToStr(milliseconds) {
     if (!millisecondsToStr) {
         return "";
     }
     // TIP: to find current time in milliseconds, use:
     // var  current_time_milliseconds = new Date().getTime();
 
-    function numberEnding (number) {
+    function numberEnding(number) {
         return (number > 1) ? 's' : '';
     }
 
@@ -67,54 +94,65 @@ function millisecondsToStr (milliseconds) {
 }
 
 function renderUsageData() {
-    getStore().getAll().then(function(usage_data) {
-        usageBody.innerHTML = '';
-        usage_data.forEach(function(usage) {
+    var usageStore = getStore();
+    var usageIndex = usageStore.index('date');
+    var selectedDate = dateInput.value || formatDate();
+    usageBody.innerHTML = '';
+    var count = 0;
+    usageIndex.openCursor(IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
+        if (!cursor) return;
+        var usage = cursor.value;
+        var tr = document.createElement("tr");
+        var td = document.createElement("td");
+        var textnode = document.createTextNode(usage.domain);
+        td.appendChild(textnode);
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        textnode = document.createTextNode(millisecondsToStr(usage.duration));
+        td.appendChild(textnode);
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        textnode = document.createTextNode(usage.url);
+        td.appendChild(textnode);
+        tr.appendChild(td);
+
+        usageBody.appendChild(tr);
+        count += 1;
+
+        return cursor.continue().then(cursorCallback);
+    }, function (error) {
+        console.error("Can't fetch all logs. ", error);
+    }).then(function () {
+        if (!count) {
             var tr = document.createElement("tr");
             var td = document.createElement("td");
-            var textnode = document.createTextNode(usage.domain);
-            td.appendChild(textnode);
-            tr.appendChild(td);
-            
-            td = document.createElement("td");
-            textnode = document.createTextNode(millisecondsToStr(usage.duration));
-            td.appendChild(textnode);
-            tr.appendChild(td);
-            
-            td = document.createElement("td");
-            textnode = document.createTextNode(usage.url);
-            td.appendChild(textnode);
-            tr.appendChild(td);
-
-            usageBody.appendChild(tr);
-        });
-
-        if (usage_data.length == 0) {
-            var tr = document.createElement("tr");
-            var td = document.createElement("td");
-            var textnode = document.createTextNode("Your logs will show up here.");
+            var textnode = document.createTextNode("No logs to show.");
             td.setAttribute("colspan", 3);
             td.style.textAlign = "center";
             td.appendChild(textnode);
             tr.appendChild(td);
             usageBody.appendChild(tr);
         }
+    }, function (error) {
+        console.error("Can't fetch all logs. ", error);
     });
 }
 
 function defineActions() {
-    clearBtn.onclick = function() {
+    clearBtn.onclick = function () {
         var r = confirm("Are you sure you want to delete all logs?");
         if (r == true) {
-            getStore('rw').clear().then(function() {
+            getStore('rw').clear().then(function () {
                 renderUsageData();
             });
         }
     };
 
-    downloadBtn.onclick = function() {
-        getStore().getAll().then(function(usage_data) {
-            var blob = new Blob([JSON.stringify(usage_data, null, 4)], { type: "text/json" });
+    downloadBtn.onclick = function () {
+        getStore().getAll().then(function (usage_data) {
+            var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
             var url = URL.createObjectURL(blob);
             chrome.downloads.download({
                 url: url,

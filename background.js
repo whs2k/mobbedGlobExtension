@@ -4,7 +4,7 @@ function init() {
         // return addListeners();
         return setupTimer();
     }).then(function() {
-        return initUi();
+        // if additional things to do
     });
 }
 
@@ -22,6 +22,7 @@ function initDataStores() {
             );
             usageStore.createIndex('tabId', 'tabId', {unique: false});
             usageStore.createIndex('windowId', 'windowId', {unique: false});
+            usageStore.createIndex('date', 'date', {unique: false});
         }
         // add more data stores as needed
     });
@@ -106,6 +107,7 @@ function addTabUsage(tab) {
     tab.startTime = Date.now() - timer_interval;
     tab.endTime = Date.now();
     tab.duration = tab.endTime - tab.startTime;
+    tab.date = formatDate();
     var request = getStore('rw').add(tab).then(function(e) {
         // console.log('Woot! Did it');
     }).catch(function(e) {
@@ -127,6 +129,23 @@ function updateTabUsage(tab, new_tab) {
         // console.log('Error', e.name, e.message);
     });
     // console.log("Updated ", tab.url, " with duration ", tab.duration);
+}
+
+function formatDate(date) {
+    var d, month, day, year;
+    if (!date) {
+        d = new Date()
+    } else {
+        d = new Date(date);
+    }
+    month = '' + (d.getMonth() + 1);
+    day = '' + d.getDate();
+    year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
 }
 
 function getDomain(url) {
@@ -160,10 +179,6 @@ function reviewTabs() {
             })
         });
     });
-}
-
-function initUi() {
-    // pass
 }
 
 // timer runs every minute.
