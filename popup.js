@@ -99,7 +99,17 @@ function getDataForSelectedDate() {
     var selectedDate = dateInput.value || formatDate();
     var usageData = [];
     var cursor = usageIndex.openCursor(IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
-        if (!cursor) return usageData;
+        if (!cursor) {
+            // fetch complete. now sort by -duration and return collected data
+            usageData.sort(function(a, b) {
+                if (a.duration < b.duration)
+                    return 1;
+                if (a.duration > b.duration)
+                    return -1;
+                return 0;
+            });
+            return usageData
+        };
         usageData.push(cursor.value);
         return cursor.continue().then(cursorCallback);
     }, function (error) {
