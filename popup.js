@@ -167,6 +167,19 @@ function defineActions() {
 
     downloadBtn.onclick = function () {
         getDataForSelectedDate().then(function (usage_data) {
+            usage_data = usage_data.map(function (usage) {
+                return {
+                    domain: usage.domain,
+                    duration: usage.duration,
+                    title: usage.title,
+                    url: usage.url,
+                    windowId: usage.windowId,
+                    tabId: usage.tabId,
+                    date: usage.date,
+                    startTime: usage.startTime,
+                    endTime: usage.endTime,
+                };
+            });
             var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
             var url = URL.createObjectURL(blob);
             chrome.downloads.download({
