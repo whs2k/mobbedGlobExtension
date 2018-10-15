@@ -97,40 +97,40 @@ function getDataForSelectedDate() {
     var usageStore = getStore();
     var usageIndex = usageStore.index('date');
     var selectedDate = dateInput.value || formatDate();
-    usageBody.innerHTML = '';
-    var cursor = usageIndex.openCursor(IDBKeyRange.only(selectedDate));
+    var usageData = [];
+    var cursor = usageIndex.openCursor(IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
+        if (!cursor) return usageData;
+        usageData.push(cursor.value);
+        return cursor.continue().then(cursorCallback);
+    }, function (error) {
+        console.error("Can't fetch all logs. ", error);
+    });
     return cursor;
 }
 
 function renderUsageData() {
-    var count = 0;
-    getDataForSelectedDate().then(function cursorCallback(cursor) {
-        if (!cursor) return;
-        var usage = cursor.value;
-        var tr = document.createElement("tr");
-        var td = document.createElement("td");
-        var textnode = document.createTextNode(usage.domain);
-        td.appendChild(textnode);
-        tr.appendChild(td);
+    getDataForSelectedDate().then(function (usageData) {
+        usageBody.innerHTML = '';
+        usageData.forEach(function (usage) {
+            var tr = document.createElement("tr");
+            var td = document.createElement("td");
+            var textnode = document.createTextNode(usage.domain);
+            td.appendChild(textnode);
+            tr.appendChild(td);
 
-        td = document.createElement("td");
-        textnode = document.createTextNode(millisecondsToStr(usage.duration));
-        td.appendChild(textnode);
-        tr.appendChild(td);
+            td = document.createElement("td");
+            textnode = document.createTextNode(millisecondsToStr(usage.duration));
+            td.appendChild(textnode);
+            tr.appendChild(td);
 
-        td = document.createElement("td");
-        textnode = document.createTextNode(usage.url);
-        td.appendChild(textnode);
-        tr.appendChild(td);
+            td = document.createElement("td");
+            textnode = document.createTextNode(usage.url);
+            td.appendChild(textnode);
+            tr.appendChild(td);
 
-        usageBody.appendChild(tr);
-        count += 1;
-
-        return cursor.continue().then(cursorCallback);
-    }, function (error) {
-        console.error("Can't fetch all logs. ", error);
-    }).then(function () {
-        if (!count) {
+            usageBody.appendChild(tr);
+        });
+        if (!usageData.length) {
             var tr = document.createElement("tr");
             var td = document.createElement("td");
             var textnode = document.createTextNode("No logs to show.");
@@ -141,7 +141,7 @@ function renderUsageData() {
             usageBody.appendChild(tr);
         }
     }, function (error) {
-        console.error("Can't fetch all logs. ", error);
+        console.error("Can't render? all logs. ", error);
     });
 }
 
@@ -156,15 +156,7 @@ function defineActions() {
     };
 
     downloadBtn.onclick = function () {
-        var usage_data = [];
-
-        getDataForSelectedDate().then(function cursorCallback(cursor) {
-            if (!cursor) return;
-            usage_data.push(cursor.value);
-            return cursor.continue().then(cursorCallback);
-        }, function (error) {
-            console.error("Can't fetch all logs. ", error);
-        }).then(function () {
+        getDataForSelectedDate().then(function (usage_data) {
             var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
             var url = URL.createObjectURL(blob);
             chrome.downloads.download({
