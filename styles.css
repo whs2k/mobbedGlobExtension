@@ -45,15 +45,27 @@ td, th {
     margin-left: 5px;
 }
 
-#btnRenderUsage {
+.btn {
     background: #00639a;
     color: white;
     border: 1px solid #004a99;
     height: 22px;
-    padding: 0 10px;
+    font-size: 14px;
+    padding: 0 15px;
     cursor: pointer;
+    vertical-align: top;
 }
 
-#btnRenderUsage:hover {
+.btn:hover {
     background: #004066;
+}
+
+#clearBtn {
+    background: white;
+    color: #00639a;
+}
+
+#clearBtn:hover {
+    background: #ddd;
+    color: #004066;
 }
