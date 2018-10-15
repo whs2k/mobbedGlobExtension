@@ -93,13 +93,18 @@ function millisecondsToStr(milliseconds) {
     return 'less than a second'; //'just now' //or other string you like;
 }
 
-function renderUsageData() {
+function getDataForSelectedDate() {
     var usageStore = getStore();
     var usageIndex = usageStore.index('date');
     var selectedDate = dateInput.value || formatDate();
     usageBody.innerHTML = '';
+    var cursor = usageIndex.openCursor(IDBKeyRange.only(selectedDate));
+    return cursor;
+}
+
+function renderUsageData() {
     var count = 0;
-    usageIndex.openCursor(IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
+    getDataForSelectedDate().then(function cursorCallback(cursor) {
         if (!cursor) return;
         var usage = cursor.value;
         var tr = document.createElement("tr");
@@ -151,13 +156,23 @@ function defineActions() {
     };
 
     downloadBtn.onclick = function () {
-        getStore().getAll().then(function (usage_data) {
+        var usage_data = [];
+
+        getDataForSelectedDate().then(function cursorCallback(cursor) {
+            if (!cursor) return;
+            usage_data.push(cursor.value);
+            return cursor.continue().then(cursorCallback);
+        }, function (error) {
+            console.error("Can't fetch all logs. ", error);
+        }).then(function () {
             var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
             var url = URL.createObjectURL(blob);
             chrome.downloads.download({
                 url: url,
                 filename: "usage-stats.json"
             });
+        }, function (error) {
+            console.error("Can't fetch all logs. ", error);
         });
     };
 }
