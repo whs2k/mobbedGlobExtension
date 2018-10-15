@@ -44,3 +44,16 @@ td, th {
     border: 1px solid #ddd;
     margin-left: 5px;
 }
+
+#btnRenderUsage {
+    background: #00639a;
+    color: white;
+    border: 1px solid #004a99;
+    height: 22px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+#btnRenderUsage:hover {
+    background: #004066;
+}
