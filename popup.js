@@ -4,6 +4,7 @@ dateInput = document.querySelector('#dateInput');
 btnRenderUsage = document.querySelector('#btnRenderUsage');
 clearBtn = document.querySelector('#clearBtn');
 downloadBtn = document.querySelector('#downloadBtn');
+downloadAllBtn = document.querySelector('#downloadAllBtn');
 
 function init() {
     initUi().then(initDb).then(function () {
@@ -93,15 +94,15 @@ function millisecondsToStr(milliseconds) {
     return 'less than a second'; //'just now' //or other string you like;
 }
 
-function getDataForSelectedDate() {
+function getDataForSelectedDate(downloadAll) {
     var usageStore = getStore();
     var usageIndex = usageStore.index('date');
     var selectedDate = dateInput.value || formatDate();
     var usageData = [];
-    var cursor = usageIndex.openCursor(IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
+    var cursor = usageIndex.openCursor(downloadAll ? undefined : IDBKeyRange.only(selectedDate)).then(function cursorCallback(cursor) {
         if (!cursor) {
             // fetch complete. now sort by -duration and return collected data
-            usageData.sort(function(a, b) {
+            usageData.sort(function (a, b) {
                 if (a.duration < b.duration)
                     return 1;
                 if (a.duration > b.duration)
@@ -109,7 +110,8 @@ function getDataForSelectedDate() {
                 return 0;
             });
             return usageData
-        };
+        }
+        ;
         usageData.push(cursor.value);
         return cursor.continue().then(cursorCallback);
     }, function (error) {
@@ -155,6 +157,32 @@ function renderUsageData() {
     });
 }
 
+function downloadData(downloadAll) {
+    getDataForSelectedDate(downloadAll).then(function (usage_data) {
+        usage_data = usage_data.map(function (usage) {
+            return {
+                domain: usage.domain,
+                duration: usage.duration,
+                title: usage.title,
+                url: usage.url,
+                windowId: usage.windowId,
+                tabId: usage.tabId,
+                date: usage.date,
+                startTime: usage.startTime,
+                endTime: usage.endTime,
+            };
+        });
+        var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
+        var url = URL.createObjectURL(blob);
+        chrome.downloads.download({
+            url: url,
+            filename: "usage-stats.json"
+        });
+    }, function (error) {
+        console.error("Can't fetch all logs. ", error);
+    });
+}
+
 function defineActions() {
     clearBtn.onclick = function () {
         var r = confirm("Are you sure you want to delete all logs?");
@@ -166,29 +194,11 @@ function defineActions() {
     };
 
     downloadBtn.onclick = function () {
-        getDataForSelectedDate().then(function (usage_data) {
-            usage_data = usage_data.map(function (usage) {
-                return {
-                    domain: usage.domain,
-                    duration: usage.duration,
-                    title: usage.title,
-                    url: usage.url,
-                    windowId: usage.windowId,
-                    tabId: usage.tabId,
-                    date: usage.date,
-                    startTime: usage.startTime,
-                    endTime: usage.endTime,
-                };
-            });
-            var blob = new Blob([JSON.stringify(usage_data, null, 4)], {type: "text/json"});
-            var url = URL.createObjectURL(blob);
-            chrome.downloads.download({
-                url: url,
-                filename: "usage-stats.json"
-            });
-        }, function (error) {
-            console.error("Can't fetch all logs. ", error);
-        });
+        downloadData()
+    };
+
+    downloadAllBtn.onclick = function () {
+        downloadData(true);
     };
 }
 
