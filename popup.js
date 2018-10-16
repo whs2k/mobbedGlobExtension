@@ -162,7 +162,7 @@ function downloadData(downloadAll) {
         usage_data = usage_data.map(function (usage) {
             return {
                 domain: usage.domain,
-                duration: usage.duration,
+                duration: (usage.duration/3600000).toFixed(2),
                 title: usage.title,
                 url: usage.url,
                 windowId: usage.windowId,
